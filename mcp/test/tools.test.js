@@ -16,7 +16,7 @@ const GOAL_WEIGHT = 77
 // Re-pinned against the v1.2.4 seed, which moved when the demo learned about bodyweight work
 // and effort. Hand-checked rather than copied off a failing run: 18412.5 is the sum of w×r
 // over the twenty completed sets, and 1.3 is 78.3 − 77.
-const NEWEST_WORKOUT = { date: '2026-07-24', name: 'Leg Day', volume: 18412.5, bw: 78.4, sets_done: 20, sets_total: 20, duration: '1h 11m' }
+const REFERENCE_WORKOUT = { date: '2026-07-24', name: 'Leg Day', volume: 18412.5, bw: 78.4, sets_done: 20, sets_total: 20, duration: '1h 11m' }
 const LATEST_BW = { date: '2026-07-27', weight: 78.3, delta: 1.3 }
 const LEG_PRESS_ID = '0739'                                 // sled 45° leg press in the demo data
 const LEG_PRESS_BEST = { w: 152.5, r: 12, epley: 213.5, brzycki: 219.6 }
@@ -276,17 +276,20 @@ describe('list_workouts', () => {
     // newest-first check
     const dates = r.workouts.map(w => w.date)
     expect([...dates].sort().reverse()).toEqual(dates)
-    // The newest workout is the Friday before the pinned Monday today.
-    expect(r.workouts[0].date).toBe(NEWEST_WORKOUT.date)
-    expect(r.workouts[0].routine_name).toBe(NEWEST_WORKOUT.name)
-    expect(r.workouts[0].volume).toBe(NEWEST_WORKOUT.volume)
-    expect(r.workouts[0].sets_done).toBe(NEWEST_WORKOUT.sets_done)
-    expect(r.workouts[0].sets_planned).toBe(NEWEST_WORKOUT.sets_total)
-    expect(r.workouts[0].sets_ratio).toBe(`${NEWEST_WORKOUT.sets_done}/${NEWEST_WORKOUT.sets_total}`)
+    // The demo seed now includes a workout on the pinned Monday; keep the date-specific
+    // Friday fixture for the hand-checked volume and duration assertions.
+    expect(r.workouts[0].date).toBe(FAKE_TODAY_ISO)
+    const friday = r.workouts.find(w => w.date === REFERENCE_WORKOUT.date)
+    expect(friday).toBeDefined()
+    expect(friday.routine_name).toBe(REFERENCE_WORKOUT.name)
+    expect(friday.volume).toBe(REFERENCE_WORKOUT.volume)
+    expect(friday.sets_done).toBe(REFERENCE_WORKOUT.sets_done)
+    expect(friday.sets_planned).toBe(REFERENCE_WORKOUT.sets_total)
+    expect(friday.sets_ratio).toBe(`${REFERENCE_WORKOUT.sets_done}/${REFERENCE_WORKOUT.sets_total}`)
     // Past the hour the lib switches format, so the expectation carries the rendered string
     // rather than assuming a "N min" shape that only held while the session was shorter.
-    expect(r.workouts[0].duration).toBe(NEWEST_WORKOUT.duration)
-    expect(r.workouts[0].bodyweight_at_workout).toBe(NEWEST_WORKOUT.bw)
+    expect(friday.duration).toBe(REFERENCE_WORKOUT.duration)
+    expect(friday.bodyweight_at_workout).toBe(REFERENCE_WORKOUT.bw)
     r.workouts.forEach(w => {
       expect(w.sets_done).toBeLessThanOrEqual(w.sets_planned)
       expect(typeof w.volume).toBe('number')
